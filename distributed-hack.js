@@ -41,7 +41,7 @@ const shareScriptRam = 4;
 const files = [weakenScriptName, growScriptName, hackScriptName];
 
 // Backdoor script hooked in (requires singluarity functions SF4.1)
-const singularityFunctionsAvailable = true;
+const singularityFunctionsAvailable = false;
 const backdoorScript = "backdoor.js"
 const backdoorScriptRam = 5.8;
 
@@ -107,7 +107,7 @@ export async function main(ns) {
 
         for (var server of servers) {
             // transfer files to the servers
-            await ns.scp(files, "home", server);
+            await ns.scp(files, server, "home");
             // ToDo: Not efficient to loop through all servers always. Could be optimized to track which server was optimized and scp only once.
 
             // backdoor faction servers automatically requires singularity module
@@ -278,7 +278,7 @@ function manageAndHack(ns, freeRams, servers, targets, growStocks, hackStocks) {
             // Considering 0 cores on all serers. 
             // The last parameter 0 can be removed if optimizing for running slave threads on home server with > 0 cores only
             // else, grow threads onother servers than home will not grow sufficiently and break perfect attack chains
-            growThreads = Math.ceil((ns.growthAnalyze(target, overallGrowRatio, 0)));
+            growThreads = Math.ceil((ns.growthAnalyze(target, overallGrowRatio, 1)));
 
             addedGrowSecurity = growThreads * growThreadSecurityIncrease;
         }
@@ -340,7 +340,7 @@ function manageAndHack(ns, freeRams, servers, targets, growStocks, hackStocks) {
                     addedHackSecurity = hackThreads * hackThreadSecurityIncrease;
                     hackReGrowRatio = 1 / (1 - reducedHackMoneyRatio);
                     overallGrowRatio = initialGrowRatio * hackReGrowRatio;
-                    growThreads = Math.floor((ns.growthAnalyze(target, overallGrowRatio, 0)));
+                    growThreads = Math.floor((ns.growthAnalyze(target, overallGrowRatio, 1)));
                     addedGrowSecurity = growThreads * growThreadSecurityIncrease;
 
                     weakThreads = Math.floor((secDiff + addedGrowSecurity + addedHackSecurity) * 20);
@@ -476,7 +476,7 @@ function manageAndHack(ns, freeRams, servers, targets, growStocks, hackStocks) {
 
         // var profit = money * maxPercentage * ns.hackAnalyzeChance(target) / (hackThreads + growThreads + weakThreads);
         // Could use hackAnalyzeChance for better value rating - costs ram however
-        
+
         var profit = money * maxPercentage / (hackThreads + growThreads + weakThreads);
         var profitM = profit * 60 / weakTime;
         profitsm.set(target, profitM);
@@ -520,7 +520,7 @@ function manageAndHack(ns, freeRams, servers, targets, growStocks, hackStocks) {
             hackSleep += timeBetweenAttacks;
             attacksLaunched++;
         }
-        
+
     }
     return attacksLaunched;
 }
@@ -648,7 +648,7 @@ function getHackable(ns, servers) {
         && ns.getServerRequiredHackingLevel(server) <= ns.getHackingLevel()
         && ns.getServerGrowth(server) > 1 && server != "n00dles").sort((a, b) =>
             profitsm["get"](b) - profitsm["get"](a))
-            // unnatural usage of "get" to avoid stanek.get RAM calculation bug
+    // unnatural usage of "get" to avoid stanek.get RAM calculation bug
 
     if (partialWeakGrow != null) {
         // prioritize a server which we have not initialized yet
