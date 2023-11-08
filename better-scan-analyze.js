@@ -1,5 +1,7 @@
 /** @param {NS} ns */
 export async function main(ns) {
+	const red = "\u001b[31m";
+	const reset = "\u001b[0m";
 	function printOutput(hostname, node, prefix = ["  "], last = true) {
 		let children = Object.keys(node);
 		const titlePrefix = prefix.slice(0, prefix.length - 1).join("") + (last ? "┗ " : "┣ ");
@@ -7,20 +9,22 @@ export async function main(ns) {
 		ns.tprintf(titlePrefix + hostname + "\n");
 
 		const server = ns.getServer(hostname);
-		if (server.organizationName)
-			ns.tprintf(`${infoPrefix}organizationName: ${server.organizationName}` + "\n");
-		if (server.maxRam)
-			ns.tprintf(`${infoPrefix}maxRam: ${server.maxRam}` + "\n");
-		if (!server.backdoorInstalled)
-			ns.tprintf(`${infoPrefix}backdoorInstalled: ${server.backdoorInstalled}` + "\n");
-		if (!server.hasAdminRights)
-			ns.tprintf(`${infoPrefix}hasAdminRights: ${server.hasAdminRights}` + "\n");
-		if (server.hackDifficulty > server.minDifficulty)
-			ns.tprintf(`${infoPrefix}hackDifficulty: ${server.hackDifficulty}` + "\n");
-		if (skill < server.requiredHackingSkill)
-			ns.tprintf(`${infoPrefix}requiredHackingSkill: ${server.requiredHackingSkill}` + "\n");
-		if (server.moneyAvailable)
-			ns.tprintf(`${infoPrefix}moneyAvailable: ${server.moneyAvailable}` + "\n");
+		if (hostname != 'home') {
+			if (server.organizationName)
+				ns.tprintf(`${infoPrefix}organizationName: ${server.organizationName}\n`);
+			if (server.maxRam)
+				ns.tprintf(`${infoPrefix}maxRam: ${ns.formatRam(server.maxRam)}\n`);
+			if (!server.backdoorInstalled && server.hackDifficulty < server.minDifficulty)
+				ns.tprintf(`${infoPrefix}backdoorInstalled: ${red}${server.backdoorInstalled}${reset}\n`);
+			if (!server.hasAdminRights)
+				ns.tprintf(`${infoPrefix}hasAdminRights: ${red}${server.hasAdminRights}${reset}\n`);
+			if (server.hackDifficulty > server.minDifficulty)
+				ns.tprintf(`${infoPrefix}hackDifficulty: ${server.hackDifficulty}\n`);
+			if (skill < server.requiredHackingSkill)
+				ns.tprintf(`${infoPrefix}requiredHackingSkill: ${server.requiredHackingSkill}\n`);
+			if (server.moneyAvailable)
+				ns.tprintf(`${infoPrefix}moneyAvailable: ${ns.formatNumber(server.moneyAvailable)}\n`);
+		}
 
 
 		children.forEach((n, i) =>
