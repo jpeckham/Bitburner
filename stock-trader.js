@@ -1,11 +1,16 @@
 // file: stock-trader.js
+import {
+    instanceCount, getConfiguration, getNsDataThroughFile, runCommand, getActiveSourceFiles, tryGetBitNodeMultipliers,
+    formatMoney, formatNumberShort, formatDuration, getStockSymbols
+} from './helpers.js'
 
 // requires 4s Market Data TIX API Access
 
 // defines if stocks can be shorted (see BitNode 8)
-const shortAvailable = true;
+const shortAvailable = false;
 
 const commission = 100000;
+const disableHud = false;
 
 export async function main(ns) {
     ns.disableLog("ALL");
@@ -16,7 +21,35 @@ export async function main(ns) {
     }
 }
 
+function initializeHud() {
+    const d = eval("document");
+    let htmlDisplay = d.getElementById("stock-display-1");
+    if (htmlDisplay !== null) return htmlDisplay;
+    // Get the custom display elements in HUD.
+    let customElements = d.getElementById("overview-extra-hook-0").parentElement.parentElement;
+    // Make a clone of the hook for extra hud elements, and move it up under money
+    let stockValueTracker = customElements.cloneNode(true);
+    // Remove any nested elements created by stats.js
+    stockValueTracker.querySelectorAll("p > p").forEach(el => el.parentElement.removeChild(el));
+    // Change ids since duplicate id's are invalid
+    stockValueTracker.querySelectorAll("p").forEach((el, i) => el.id = "stock-display-" + i);
+    // Get out output element
+    htmlDisplay = stockValueTracker.querySelector("#stock-display-1");
+    // Display label and default value
+    stockValueTracker.querySelectorAll("p")[0].innerText = "Stock";
+    htmlDisplay.innerText = "$0.000 "
+    // Insert our element right after Money
+    customElements.parentElement.insertBefore(stockValueTracker, customElements.parentElement.childNodes[2]);
+    return htmlDisplay;
+}
+
 function tendStocks(ns) {
+    let hudElement = null;
+    if (!disableHud) {
+        hudElement = initializeHud();
+        ns.atExit(() => hudElement.parentElement.parentElement.parentElement.removeChild(hudElement.parentElement.parentElement));
+    }
+
     ns.print("");
     var stocks = getAllStocks(ns);
 
@@ -34,7 +67,7 @@ function tendStocks(ns) {
                 overallValue += (stock.cost + stock.profit);
             }
             else {
-                const salePrice = ns.stock.sell(stock.sym, stock.longShares);
+                const salePrice = ns.stock.sellStock(stock.sym, stock.longShares);
                 const saleTotal = salePrice * stock.longShares;
                 const saleCost = stock.longPrice * stock.longShares;
                 const saleProfit = saleTotal - saleCost - 2 * commission;
@@ -69,7 +102,7 @@ function tendStocks(ns) {
             //ns.print(`INFO ${stock.summary}`);
             if (money > 500 * commission) {
                 const sharesToBuy = Math.min(stock.maxShares, Math.floor((money - commission) / stock.askPrice));
-                if (ns.stock.buy(stock.sym, sharesToBuy) > 0) {
+                if (ns.stock.buyStock(stock.sym, sharesToBuy) > 0) {
                     ns.print(`WARN ${stock.summary} LONG BOUGHT ${ns.nFormat(sharesToBuy, "$0.0a")}`);
                 }
             }
@@ -79,14 +112,15 @@ function tendStocks(ns) {
             //ns.print(`INFO ${stock.summary}`);
             if (money > 500 * commission) {
                 const sharesToBuy = Math.min(stock.maxShares, Math.floor((money - commission) / stock.bidPrice));
-                if (ns.stock.short(stock.sym, sharesToBuy) > 0) {
+                if (ns.stock.buyShort(stock.sym, sharesToBuy) > 0) {
                     ns.print(`WARN ${stock.summary} SHORT BOUGHT ${ns.nFormat(sharesToBuy, "$0.0a")}`);
                 }
             }
         }
     }
     ns.print("Stock value: " + ns.nFormat(overallValue, "$0.0a"));
-
+    if (hudElement)
+        hudElement.innerText = formatMoney(overallValue, 6, 3);
     // send stock market manipulation orders to hack manager
     var growStockPort = ns.getPortHandle(1); // port 1 is grow
     var hackStockPort = ns.getPortHandle(2); // port 2 is hack
