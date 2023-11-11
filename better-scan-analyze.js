@@ -6,24 +6,22 @@ export async function main(ns) {
 		let children = Object.keys(node);
 		const titlePrefix = prefix.slice(0, prefix.length - 1).join("") + (last ? "┗ " : "┣ ");
 		const infoPrefix = prefix.join("") + (children.length > 0 ? "┃   " : "    ");
-		ns.tprintf(titlePrefix + hostname + "\n");
-
 		const server = ns.getServer(hostname);
+		ns.tprintf(titlePrefix + hostname + ` ${red}${!server.hasAdminRights ? "nuke" : ""}${reset} ${red}${!server.backdoorInstalled && server.requiredHackingSkill <= ns.getHackingLevel() ? "backdoor" : ""}${reset}\n`);
+
+
 		if (hostname != 'home') {
-			if (server.organizationName)
-				ns.tprintf(`${infoPrefix}organizationName: ${server.organizationName}\n`);
-			if (server.maxRam)
-				ns.tprintf(`${infoPrefix}maxRam: ${ns.formatRam(server.maxRam)}\n`);
-			if (!server.backdoorInstalled && server.hackDifficulty < server.minDifficulty)
-				ns.tprintf(`${infoPrefix}backdoorInstalled: ${red}${server.backdoorInstalled}${reset}\n`);
-			if (!server.hasAdminRights)
-				ns.tprintf(`${infoPrefix}hasAdminRights: ${red}${server.hasAdminRights}${reset}\n`);
-			if (server.hackDifficulty > server.minDifficulty)
-				ns.tprintf(`${infoPrefix}hackDifficulty: ${server.hackDifficulty}\n`);
+
+			//if (server.organizationName)
+			//        ns.tprintf(`${infoPrefix}organizationName: ${server.organizationName}\n`);
+			//if (server.maxRam)
+			//        ns.tprintf(`${infoPrefix}maxRam: ${ns.formatRam(server.maxRam)}\n`);
+			//      if (server.hackDifficulty > server.minDifficulty)
+			//ns.tprintf(`${infoPrefix}hackDifficulty: ${server.hackDifficulty}\n`);
 			if (skill < server.requiredHackingSkill)
 				ns.tprintf(`${infoPrefix}requiredHackingSkill: ${server.requiredHackingSkill}\n`);
-			if (server.moneyAvailable)
-				ns.tprintf(`${infoPrefix}moneyAvailable: ${ns.formatNumber(server.moneyAvailable)}\n`);
+			//if (server.moneyAvailable)
+			//ns.tprintf(`${infoPrefix}moneyAvailable: ${ns.formatNumber(server.moneyAvailable)}\n`);
 		}
 
 
